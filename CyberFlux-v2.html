@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBERFEED // FLUX DIRECT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Oswald:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-sidebar: #080808;
+            --bg-card: #0a0a0a;
+            --text-main: #e0e0e0;
+            --text-muted: #666666;
+            --accent: #ff2a2a;
+            --success: #00ff41;
+            --error: #ff3333;
+            --warn: #ffcc00;
+            --border: #1f1f1f;
+            --font-title: 'Oswald', sans-serif;
+            --font-code: 'Fira Code', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border) var(--bg-body); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: var(--font-code); overflow: hidden; display: flex; height: 100vh; }
+
+        /* SIDEBAR */
+        aside { width: 300px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem 1rem; flex-shrink: 0; z-index: 10; overflow-y: auto; }
+        .brand { font-family: var(--font-title); font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; letter-spacing: 1px; text-transform: uppercase; border-left: 4px solid var(--accent); padding-left: 0.8rem; }
+        .brand span { color: var(--accent); }
+        .brand small { display: block; font-size: 0.6rem; color: #444; font-family: var(--font-code); font-weight: 400; margin-top: 2px; letter-spacing: 2px; }
+
+        .sidebar-stats { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .stat-pill { font-size: 0.65rem; padding: 2px 8px; background: #111; border: 1px solid #222; color: #555; }
+        .stat-pill span { color: var(--success); }
+
+        .search-box { position: relative; margin-bottom: 1rem; }
+        .search-input { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 0.6rem 0.8rem; font-family: var(--font-code); font-size: 0.75rem; outline: none; transition: border-color 0.3s; }
+        .search-input:focus { border-color: var(--accent); }
+
+        .category-group { margin-bottom: 0.5rem; border-bottom: 1px solid #111; padding-bottom: 0.3rem; }
+        .cat-header { display: flex; justify-content: space-between; align-items: center; color: #777; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; padding: 5px 4px; user-select: none; border-radius: 2px; }
+        .cat-header:hover { color: var(--accent); background: #0d0d0d; }
+        .cat-count { font-size: 0.65rem; background: #1a1a1a; padding: 1px 5px; border-radius: 2px; color: #444; }
+        .cat-header:hover .cat-count { background: var(--accent); color: #000; }
+        .cat-content { display: none; margin-top: 3px; padding-left: 8px; border-left: 1px solid #1a1a1a; }
+        .cat-content.open { display: block; }
+        .source-link { display: flex; justify-content: space-between; align-items: center; color: #555; font-size: 0.72rem; text-decoration: none; padding: 3px 4px; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 2px; }
+        .source-link:hover { color: #ccc; background: #0d0d0d; }
+        .source-link.active { color: var(--accent); font-weight: bold; }
+        .src-count { font-size: 0.6rem; color: #333; flex-shrink: 0; margin-left: 4px; }
+        .source-link.active .src-count { color: #a00; }
+
+        /* TYPE BADGES in sidebar */
+        .type-badge { font-size: 0.55rem; padding: 1px 4px; border-radius: 2px; flex-shrink: 0; margin-left: 3px; }
+        .type-badge.video { background: #1a0a00; color: #ff6600; border: 1px solid #3a1a00; }
+        .type-badge.podcast { background: #0a001a; color: #aa44ff; border: 1px solid #2a004a; }
+        .type-badge.social { background: #001a1a; color: #00aaaa; border: 1px solid #004444; }
+
+        /* MAIN */
+        .wrapper { flex-grow: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle at top right, #111 0%, #050505 60%); overflow: hidden; }
+
+        .ticker-wrap { width: 100%; background: var(--accent); color: #000; height: 28px; overflow: hidden; display: flex; align-items: center; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; flex-shrink: 0; }
+        .ticker { display: inline-block; white-space: nowrap; padding-right: 100%; animation: ticker 60s linear infinite; }
+        @keyframes ticker { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-100%,0,0); } }
+
+        .content-scroll { flex-grow: 1; overflow-y: auto; padding: 1.5rem 2rem; scroll-behavior: smooth; }
+
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; flex-wrap: wrap; gap: 0.8rem; }
+        .page-title { font-family: var(--font-title); font-size: 2rem; font-weight: 300; color: #fff; }
+        .header-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+        .time-filters { display: flex; background: #000; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+        .filter-btn { background: transparent; border: none; color: #555; padding: 6px 16px; font-family: var(--font-code); font-size: 0.72rem; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+        .filter-btn:hover { color: #fff; background: #111; }
+        .filter-btn.active { background: var(--accent); color: #000; }
+
+        .type-filters { display: flex; background: #000; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+
+        .refresh-btn { background: #111; border: 1px solid var(--border); color: #666; padding: 6px 12px; font-family: var(--font-code); font-size: 0.72rem; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+        .refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+        .stats { font-size: 0.72rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .progress-bar-wrap { flex-grow: 1; height: 2px; background: #111; margin: 0 1rem; }
+        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+
+        /* GRID */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+        .card { background: var(--bg-card); padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; transition: background 0.2s; position: relative; cursor: pointer; text-decoration: none; min-height: 180px; }
+        .card:hover { background: #0f0f0f; }
+        .card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
+        .card:hover::after { transform: scaleX(1); }
+        .card.media { border-left: 2px solid #ff6600; }
+        .card.social { border-left: 2px solid #00aaaa; }
+        .meta { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; justify-content: space-between; gap: 0.5rem; }
+        .source { color: #777; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
+        .time { color: #333; flex-shrink: 0; }
+        .card-title { font-family: var(--font-title); font-size: 1.1rem; line-height: 1.3; color: #ddd; font-weight: 500; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin-bottom: 0.8rem; }
+        .card-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .tags { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .tag { font-size: 0.6rem; padding: 2px 5px; background: #111; border: 1px solid #2a2a2a; color: #666; text-transform: uppercase; }
+        .tag.ransomware { border-color: #ff4444; color: #ff4444; }
+        .tag.vuln { border-color: #ffcc00; color: #ffcc00; }
+        .tag.france { border-color: #0055ff; color: #0055ff; }
+        .tag.apt { border-color: #aa00ff; color: #aa00ff; }
+        .tag.video { border-color: #ff6600; color: #ff6600; }
+        .tag.podcast { border-color: #aa44ff; color: #aa44ff; }
+        .tag.social { border-color: #00aaaa; color: #00aaaa; }
+        .tag.phishing { border-color: #ff8800; color: #ff8800; }
+        .tag.data { border-color: #00bbff; color: #00bbff; }
+
+        .empty-msg { padding: 3rem; text-align: center; color: #222; width: 100%; font-family: var(--font-title); font-size: 1.2rem; letter-spacing: 2px; }
+
+        /* LOADER */
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.97); z-index: 100; display: flex; flex-direction: column; transition: opacity 0.6s; padding: 1.5rem; overflow: hidden; }
+        .loader-header { flex-shrink: 0; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .spinner { width: 30px; height: 30px; border: 2px solid #222; border-top: 2px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loader-msg-text { font-weight: bold; color: var(--accent); font-size: 0.85rem; }
+        .loader-sub { color: #444; font-size: 0.7rem; }
+        .loader-progress { display: flex; align-items: center; gap: 0.8rem; width: 100%; margin-top: 0.4rem; }
+        .loader-bar-wrap { flex-grow: 1; height: 3px; background: #111; }
+        .loader-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s; }
+        .loader-pct { font-size: 0.72rem; color: #555; width: 60px; text-align: right; flex-shrink: 0; }
+        .log-scroll { flex-grow: 1; overflow-y: auto; }
+        .log-container { font-family: var(--font-code); font-size: 0.72rem; color: #ccc; display: flex; flex-direction: column; gap: 3px; }
+        .log-entry { display: grid; grid-template-columns: 55px 180px 1fr; gap: 8px; align-items: baseline; }
+        .log-status { font-weight: bold; }
+        .log-status.ok { color: var(--success); }
+        .log-status.err { color: var(--error); }
+        .log-status.retry { color: var(--warn); }
+        .log-status.wait { color: #444; }
+        .log-name { color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .log-detail { color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Mobile */
+        @media (max-width: 900px) {
+            body { flex-direction: column; overflow: auto; }
+            aside { width: 100%; height: auto; max-height: 280px; padding: 0.8rem; }
+            .wrapper { height: auto; overflow: visible; }
+            .content-scroll { overflow: visible; padding: 0.8rem; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="loader-header">
+        <div class="spinner"></div>
+        <div>
+            <div class="loader-msg-text" id="loader-msg">INITIALISATION...</div>
+            <div class="loader-sub" id="loader-sub">Chargement des flux RSS via proxy CORS</div>
+        </div>
+        <div class="loader-progress" style="width:100%;">
+            <div class="loader-bar-wrap"><div class="loader-bar" id="loader-bar"></div></div>
+            <div class="loader-pct" id="loader-pct">0%</div>
+        </div>
+    </div>
+    <div class="log-scroll">
+        <div class="log-container" id="log-list"></div>
+    </div>
+</div>
+
+<aside id="sidebar">
+    <div class="brand">CYBER<span>FEED</span><small>// FLUX DIRECT v2.0</small></div>
+    <div class="sidebar-stats">
+        <div class="stat-pill">Articles: <span id="sb-articles">0</span></div>
+        <div class="stat-pill">Sources: <span id="sb-sources">0</span></div>
+        <div class="stat-pill">OK: <span id="sb-ok">0</span></div>
+    </div>
+    <div class="search-box">
+        <input type="text" id="search" class="search-input" placeholder="> Filtrer par mot-clé...">
+    </div>
+    <div id="theme-menu"></div>
+</aside>
+
+<div class="wrapper">
+    <div class="ticker-wrap">
+        <div class="ticker" id="ticker-text">CYBERFEED // FLUX DIRECT // CHARGEMENT EN COURS... //</div>
+    </div>
+
+    <div class="content-scroll">
+        <div class="header-bar">
+            <h1 class="page-title" id="current-view-title">Tout Afficher</h1>
+            <div class="header-controls">
+                <div class="time-filters">
+                    <button class="filter-btn" onclick="setTimeFilter('today',this)">Auj</button>
+                    <button class="filter-btn active" onclick="setTimeFilter('week',this)">7j</button>
+                    <button class="filter-btn" onclick="setTimeFilter('month',this)">30j</button>
+                    <button class="filter-btn" onclick="setTimeFilter('all',this)">Tout</button>
+                </div>
+                <div class="type-filters">
+                    <button class="filter-btn active" onclick="setTypeFilter('all',this)">Tous</button>
+                    <button class="filter-btn" onclick="setTypeFilter('article',this)">Articles</button>
+                    <button class="filter-btn" onclick="setTypeFilter('media',this)">Médias</button>
+                    <button class="filter-btn" onclick="setTypeFilter('social',this)">Social</button>
+                </div>
+                <button class="refresh-btn" onclick="refreshFeeds()">⟳ Refresh</button>
+                <span id="auto-refresh-badge" style="font-size:0.65rem;color:#333;font-family:var(--font-code);padding:6px 8px;border:1px solid #1a1a1a;white-space:nowrap;">⏱ 60:00</span>
+            </div>
+        </div>
+
+        <div class="stats">
+            <span id="article-count">0 ARTICLES</span>
+            <div class="progress-bar-wrap"><div class="progress-bar" id="main-progress"></div></div>
+            <span id="loader-percent">Chargement...</span>
+        </div>
+
+        <div class="grid" id="feed-grid">
+            <div class="empty-msg">EN ATTENTE DES FLUX...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== PROXY LOCAL =====
+const LOCAL_PROXY = 'http://localhost:8765';
+const PROXIES = [
+    url => `${LOCAL_PROXY}/fetch?url=${encodeURIComponent(url)}`
+];
+
+// ===== SOURCE TYPE DETECTION =====
+function detectType(url) {
+    if (url.includes('youtube.com') || url.includes('dailymotion.com') || url.includes('twitch') || url.includes('odysee') || url.includes('peertube') || url.includes('tube.numerique')) return 'video';
+    if (url.includes('ausha.co') || url.includes('audiomeans') || url.includes('podcast') || url.includes('acast.com') || url.includes('redcircle') || url.includes('feedburner.com/le') || url.includes('anchor.fm') || url.includes('podcastics') || url.includes('polysecure') || url.includes('securite.fm')) return 'podcast';
+    if (url.includes('bsky.app') || url.includes('mastodon') || url.includes('infosec.exchange') || url.includes('mamot.fr') || url.includes('piaille.fr') || url.includes('flipboard') || url.includes('social.numerique') || url.includes('mastox') || url.includes('riin.fr') || url.includes('firefish')) return 'social';
+    return 'article';
+}
+
+// ===== CATEGORIZED SOURCES =====
+const SOURCES = {
+    "🌐 Actualités FR": [
+        { url: "https://korben.info/feed", name: "Korben" },
+        { url: "https://www.zataz.com/feed/", name: "Zataz" },
+        { url: "https://www.zataz.com/search/fuite/feed/rss2/", name: "Zataz — Fuites" },
+        { url: "http://feeds.feedburner.com/zataz/lhOa", name: "Zataz FeedBurner" },
+        { url: "https://www.lemondeinformatique.fr/feed/rss/", name: "LMI" },
+        { url: "https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml", name: "LMI — Sécurité" },
+        { url: "https://www.zdnet.fr/feeds/rss/actualites/cybersecurite/", name: "ZDNet FR" },
+        { url: "https://www.01net.com/actualites/securite/feed/", name: "01net — Sécurité" },
+        { url: "https://www.01net.com/tag/cyberattaque/feed/", name: "01net — Cyberattaque" },
+        { url: "https://www.01net.com/tag/cybersecurite/feed/", name: "01net — Cybersec" },
+        { url: "https://www.01net.com/tag/fuite-de-donnees-personnelles/feed/", name: "01net — Fuites" },
+        { url: "https://www.clubic.com/feed/cyber-pro/rss", name: "Clubic — Cyber Pro" },
+        { url: "https://www.clubic.com/feed/cyberguerre/rss", name: "Clubic — Cyberguerre" },
+        { url: "https://www.clubic.com/feed/antivirus-securite-informatique/rss", name: "Clubic — Antivirus" },
+        { url: "https://www.undernews.fr/feed", name: "Undernews" },
+        { url: "https://www.undernews.fr/theme/alertes-securite/feed", name: "Undernews — Alertes" },
+        { url: "https://www.undernews.fr/theme/hacking-hacktivisme/feed", name: "Undernews — Hacking" },
+        { url: "https://www.undernews.fr/theme/malwares-virus-antivirus/feed", name: "Undernews — Malwares" },
+        { url: "https://www.numerama.com/cyberguerre/feed/", name: "Numerama — Cyberguerre" },
+        { url: "https://www.numerama.com/cyberguerre/cybercriminalite/feed/", name: "Numerama — Criminalité" },
+        { url: "https://www.numerama.com/tag/cyberattaque/feed/", name: "Numerama — Cyberattaque" },
+        { url: "https://www.numerama.com/tag/cybersecurite/feed/", name: "Numerama — Cybersec" },
+        { url: "https://www.numerama.com/cyberguerre/hygiene-numerique/vie-privee-et-donnees-personnelles/feed/", name: "Numerama — Vie privée" },
+        { url: "https://www.presse-citron.net/category/cybersecurite/feed/", name: "Presse Citron" },
+        { url: "https://www.lemonde.fr/cybercriminalite/rss_full.xml", name: "Le Monde — Cybercrime" },
+        { url: "https://www.lemonde.fr/piratage/rss_full.xml", name: "Le Monde — Piratage" },
+        { url: "https://www.lemonde.fr/securite-informatique/rss_full.xml", name: "Le Monde — Sécu" },
+        { url: "https://www.lemonde.fr/rancongiciels/rss_full.xml", name: "Le Monde — Ransomware" },
+        { url: "https://www.franceinfo.fr/internet/securite-sur-internet/cyberattaques.rss", name: "FranceInfo — Cyberattaques" },
+        { url: "https://www.franceinfo.fr/internet/securite-sur-internet.rss", name: "FranceInfo — Sécurité" },
+        { url: "https://www.france24.com/fr/tag/cybers%C3%A9curit%C3%A9/rss", name: "France24" },
+        { url: "https://www.rfi.fr/fr/tag/cybercriminalit%C3%A9/rss", name: "RFI — Cybercrime" },
+        { url: "https://www.nouvelobs.com/cybersecurite/rss.xml", name: "Nouvel Obs" },
+        { url: "https://www.lepoint.fr/arc/outboundfeeds/rss/tags_slug/cybersecurite/", name: "Le Point" },
+        { url: "https://www.liberation.fr/arc/outboundfeeds/rss/tags_slug/cybersecurite/?outputType=xml", name: "Libération" },
+        { url: "https://www.huffingtonpost.fr/cybersecurite/rss_headline.xml", name: "HuffPost FR" },
+        { url: "https://www.courrierinternational.com/feed/rubrique/cybercriminalite-et-cybersecurite/rss.xml", name: "Courrier International" },
+        { url: "https://incyber.org/feed/", name: "InCyber" },
+        { url: "https://incyber.org/categorie/cyber/feed/", name: "InCyber — Cyber" },
+        { url: "https://incyber.org/categorie/cybercriminalite/feed/", name: "InCyber — Criminalité" },
+        { url: "https://incyber.org/categorie/gestion-des-risques/feed/", name: "InCyber — Risques" },
+        { url: "https://www.datasecuritybreach.fr/feed/", name: "DataSecurityBreach" },
+        { url: "https://www.datasecuritybreach.fr/category/cybersecurite/feed/", name: "DSB — Cybersec" },
+        { url: "https://www.datasecuritybreach.fr/category/entreprise/fuite-de-donnees/feed/", name: "DSB — Fuites" },
+        { url: "https://hacktualites.com/feed", name: "Hacktualités" },
+        { url: "https://www.globalsecuritymag.fr/spip.php?page=backend&id_rubrique=89", name: "GlobalSecMag — Actus" },
+        { url: "https://www.globalsecuritymag.fr/spip.php?page=backend&id_rubrique=6", name: "GlobalSecMag — Prod" },
+        { url: "https://www.globalsecuritymag.fr/spip.php?page=backend&id_rubrique=13", name: "GlobalSecMag — Experts" },
+        { url: "https://www.globalsecuritymag.fr/spip.php?page=backend&id_rubrique=4", name: "GlobalSecMag — Entretiens" },
+        { url: "https://www.silicon.fr/thematique/cybersecurite-1371/feed", name: "Silicon.fr" },
+        { url: "https://www.journaldugeek.com/tag/cybersecurite/feed/", name: "Journal du Geek" },
+        { url: "https://www.journaldunet.com/cybersecurite/rss/", name: "JDN Cybersec" },
+        { url: "https://kulturegeek.fr/tag/securite/feed", name: "KultureGeek" },
+        { url: "https://www.frandroid.com/culture-tech/securite-applications/feed", name: "Frandroid" },
+        { url: "https://www.lesclesdudigital.fr/tag/cybersecurite/feed/", name: "Les Clés du Digital" },
+        { url: "https://www.frenchweb.fr/rubrique/entreprises/business/cybersecurite/feed", name: "FrenchWeb" },
+        { url: "https://www.s3curity.info/wp/feed/", name: "s3curity.info" },
+        { url: "https://www.securiteoff.com/feed/", name: "SecuriteOff" },
+        { url: "https://bonjourlafuite.eu.org/feed.xml", name: "Bonjour la Fuite" },
+        { url: "https://www.journalduhacker.net/t/s%C3%A9curit%C3%A9.rss", name: "JdH — Sécurité" },
+        { url: "https://www.it-connect.fr/tag/cybersecurite/feed/", name: "IT-Connect" },
+        { url: "https://www.it-connect.fr/actualites/actu-securite/feed/", name: "IT-Connect — Actu" },
+        { url: "https://www.cyber-securite.fr/feed/", name: "cyber-securite.fr" },
+        { url: "https://www.hackndo.com/feed/", name: "Hackndo" },
+        { url: "https://linuxfr.org/tags/cybers%C3%A9curit%C3%A9/public.atom", name: "LinuxFR — Cybersec" },
+        { url: "https://www.lootus.net/feed/", name: "Lootus" },
+        { url: "https://www.letemps.ch/cybersecurite.rss", name: "Le Temps (CH)" },
+        { url: "https://www.rts.ch/education/sciences-et-environnement/technologies/protection-des-donnees/?format=rss/news", name: "RTS — Protection données" },
+        { url: "https://rss.rtbf.be/article/rss/highlight_rtbf_protection-vie-privee.xml?source=internal", name: "RTBF — Vie privée" },
+        { url: "https://www.euronews.com/rss?level=tag&name=cybersecurite", name: "Euronews — Cybersec" },
+        { url: "https://www.euronews.com/rss?level=tag&name=piratage-informatique", name: "Euronews — Piratage" },
+        { url: "https://www.macommune.info/tags/cyberattaque/feed/", name: "MaCommune — Cyberattaque" },
+        { url: "https://www.83-629.fr/tag/cybersecurite/rss/", name: "83-629" },
+        { url: "https://www.blogdumoderateur.com/dossier/cybersecurite/feed/", name: "Blog du Modérateur" },
+        { url: "https://www.commentcamarche.net/securite/piratage/rss/", name: "CCM — Piratage" },
+        { url: "https://www.commentcamarche.net/securite/rss/", name: "CCM — Sécurité" },
+        { url: "https://theconversation.com/topics/cybersecurite-31367/articles.atom", name: "The Conversation FR" },
+        { url: "https://medium.com/feed/tag/cybers%C3%A9curit%C3%A9", name: "Medium FR Cybersec" },
+        { url: "https://www.dcmag.fr/category/actualites/securite/feed/", name: "DCMag" },
+        { url: "https://www.larevuedudigital.com/category/securite/feed/", name: "La Revue du Digital" },
+        { url: "https://www.lebigdata.fr/securite/feed", name: "LeBigData — Sécu" }
+    ],
+
+    "🏛️ Institutionnel & Gouvernements": [
+        { url: "https://www.ssi.gouv.fr/feed/", name: "ANSSI" },
+        { url: "https://cyber.gouv.fr/actualites/rss/", name: "cyber.gouv.fr" },
+        { url: "https://www.cert.ssi.gouv.fr/feed/", name: "CERT-FR" },
+        { url: "https://www.cert.ssi.gouv.fr/feed/scada/", name: "CERT-FR — SCADA" },
+        { url: "https://www.cybermalveillance.gouv.fr/feed/atom-flux-actualites", name: "Cybermalveillance — Actus" },
+        { url: "https://www.cybermalveillance.gouv.fr/feed/atom-flux-alertes", name: "Cybermalveillance — Alertes" },
+        { url: "https://www.cybermalveillance.gouv.fr/feed/atom-flux-fiches-reflexes", name: "Cybermalveillance — Fiches" },
+        { url: "https://www.cnil.fr/fr/rss.xml", name: "CNIL" },
+        { url: "https://linc.cnil.fr/rss.xml", name: "LINC (CNIL)" },
+        { url: "https://cyberveille.esante.gouv.fr/alertes-et-vulnerabilites/rss.xml", name: "Cyberveille Santé" },
+        { url: "https://www.intercert-france.fr/feed/", name: "InterCERT France" },
+        { url: "https://www.cisa.gov/news-events/news/feed", name: "CISA (US)" },
+        { url: "https://us-cert.cisa.gov/ncas/current-activity.xml", name: "US-CERT Activity" },
+        { url: "https://www.ncsc.gov.uk/news.xml", name: "NCSC (UK)" },
+        { url: "https://www.enisa.europa.eu/news/rss.xml", name: "ENISA (EU)" },
+        { url: "https://www.bsi.bund.de/SharedDocs/DE/News/Newsnode/news_node.html?view=renderNewsOverviewRSS", name: "BSI (DE)" },
+        { url: "https://ccb.belgium.be/fr/news.xml", name: "CCB (BE)" },
+        { url: "https://www.cyber.gc.ca/api/cccs/atom/v1/get?feed=news_events_guidance&lang=fr", name: "CCCS (CA) — Guidance" },
+        { url: "https://www.cyber.gc.ca/api/cccs/atom/v1/get?feed=alerts_advisories&lang=fr", name: "CCCS (CA) — Alertes" },
+        { url: "https://www.priv.gc.ca/fr/rss/news/", name: "Commissariat Vie Privée CA" },
+        { url: "https://www.data.gouv.fr/api/1/datasets/recent.atom?q=cybers%C3%A9curit%C3%A9&sort=-last_update", name: "Data.gouv.fr" },
+        { url: "https://www.csirt-bfc.fr/feed/", name: "CSIRT BFC" },
+        { url: "https://www.cyber-reunion.fr/feed/", name: "Cyber Réunion" },
+        { url: "https://urgencecyber-regionsud.fr/feed/", name: "Urgence Cyber Sud" },
+        { url: "https://urgencecyber-regionsud.fr/actualites/feed/", name: "Urgence Cyber Sud — Actus" },
+        { url: "https://centrecyberpacifique.nc/feed/", name: "Centre Cyber Pacifique" },
+        { url: "https://hdf.campuscyber.fr/feed/", name: "Campus Cyber HdF" },
+        { url: "https://campuscyber.fr/decouvrez-les-dernieres-actualites-du-campus-cyber/feed/", name: "Campus Cyber" },
+        { url: "https://www.2600.eu/feed/", name: "2600.eu" }
+    ],
+
+    "🔬 Recherche & Vulnérabilités": [
+        { url: "https://thehackernews.com/feed.xml", name: "The Hacker News" },
+        { url: "https://feeds.feedburner.com/GoogleOnlineSecurityBlog", name: "Google Security Blog" },
+        { url: "https://googleprojectzero.blogspot.com/feeds/posts/default", name: "Project Zero" },
+        { url: "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml", name: "NVD CVE Feed" },
+        { url: "https://securitylab.github.com/research/feed.xml", name: "GitHub Security Lab" },
+        { url: "https://www.zerodayinitiative.com/blog?format=RSS", name: "ZDI Blog" },
+        { url: "https://www.exploit-db.com/rss.xml", name: "Exploit-DB" },
+        { url: "https://packetstormsecurity.com/files/rss/", name: "Packet Storm" },
+        { url: "https://malpedia.caad.fkie.fraunhofer.de/feeds/rss.xml", name: "Malpedia" },
+        { url: "https://www.hybrid-analysis.com/feed?limit=20", name: "Hybrid Analysis" },
+        { url: "https://www.microsoft.com/en-us/security/blog/feed/", name: "Microsoft Security" },
+        { url: "https://portal.msrc.microsoft.com/en-us/security-guidance/rss", name: "MSRC Advisory" },
+        { url: "https://www.sstic.org/feeds/latest", name: "SSTIC" },
+        { url: "https://root-me.org/?page=backend&id_rubrique=5", name: "Root-Me" },
+        { url: "https://m82-project.org/index.xml", name: "M82 Project" },
+        { url: "https://pepr-defmal.loria.fr/fr/feed/", name: "PEPR DEFMAL" },
+        { url: "https://www.pepr-cybersecurite.fr/feed/", name: "PEPR Cybersécurité" },
+        { url: "https://theses.fr/api/v1/theses/rss?q=cybers%C3%A9curit%C3%A9", name: "Thèses.fr" },
+        { url: "https://cyberjournal.cecyf.fr/index.php/cybin/fr/gateway/plugin/WebFeedGatewayPlugin/atom", name: "CyCon Journal (CECyF)" },
+        { url: "https://interstices.info/domaine/securite-vie-privee/feed/", name: "Interstices — Sécu" },
+        { url: "https://lejournal.cnrs.fr/rss/607", name: "CNRS — Numérique" },
+        { url: "https://securite.developpez.com/index/rss", name: "Developpez.com — Sécu" },
+        { url: "https://id-ransomware.blogspot.com/feeds/posts/default", name: "ID Ransomware" }
+    ],
+
+    "🌍 Veille Internationale": [
+        { url: "https://krebsonsecurity.com/feed/", name: "Krebs on Security" },
+        { url: "https://www.bleepingcomputer.com/feed/", name: "BleepingComputer" },
+        { url: "https://www.wired.com/feed/security", name: "Wired Security" },
+        { url: "https://www.darkreading.com/rss.xml", name: "Dark Reading" },
+        { url: "https://feeds.feedburner.com/threatpost", name: "Threatpost" },
+        { url: "https://www.theregister.com/security/headlines.atom", name: "The Register" },
+        { url: "https://www.zdnet.com/topic/security/rss.xml", name: "ZDNet Security" },
+        { url: "https://arstechnica.com/tag/security/feed/", name: "Ars Technica" },
+        { url: "https://blog.talosintelligence.com/feed/", name: "Cisco Talos" },
+        { url: "https://research.checkpoint.com/feed/", name: "Check Point Research" },
+        { url: "https://www.mandiant.com/resources/blog/rss", name: "Mandiant Blog" },
+        { url: "https://unit42.paloaltonetworks.com/feed/", name: "Unit42" },
+        { url: "https://www.crowdstrike.com/blog/feed/", name: "CrowdStrike" },
+        { url: "https://feeds.feedburner.com/akamai/blog", name: "Akamai Blog" },
+        { url: "https://blog.cloudflare.com/fr-fr/rss", name: "Cloudflare Blog FR" },
+        { url: "https://www.riskinsight-wavestone.com/feed/", name: "Wavestone Risk Insight" },
+        { url: "https://www.cybersecurity-insiders.com/feed/", name: "Cybersecurity Insiders" },
+        { url: "https://www.securityweek.com/feed/", name: "SecurityWeek" },
+        { url: "https://feeds.feedburner.com/orangecyberdefense/k58Df6L5wBf", name: "Orange Cyberdefense" },
+        { url: "https://feeds.feedburner.com/vigilance/pGguTDJcmdt", name: "Vigilance.fr" },
+        { url: "https://www.intrinsec.com/feed/", name: "Intrinsec" },
+        { url: "https://sysdream.com/feed/", name: "Sysdream" },
+        { url: "https://amossys.fr/feed/", name: "AMOSSYS" },
+        { url: "https://www.hackndo.com/feed/", name: "Hackndo" },
+        { url: "https://www.0x0ff.info/feed/", name: "0x0ff" },
+        { url: "https://www.cert-bund.de/advisories.rdf", name: "CERT-Bund (DE)" },
+        { url: "https://securitylab.amnesty.org/fr/feed/", name: "Amnesty Security Lab" },
+        { url: "https://www.europesays.com/fr/tag/cybersecurite/feed/", name: "EuropeSays" },
+        { url: "https://www.opex360.com/tag/cyber/feed/", name: "Opex360 — Cyber" },
+        { url: "https://www.opex360.com/tag/regiment-de-cyberdefense/feed/", name: "Opex360 — Cyber Défense" }
+    ],
+
+    "🎬 Médias (Vidéos & Podcasts)": [
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCKer38YJH5dEtbmzn1yHXuA", name: "YT — Cyber FR" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCUgM0yXQTFlRazDekiF6Mkg", name: "YT — Cybermalveillance" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCaUcOlI5cHWPROUfhcbE0eA", name: "YT — Advens" },
+        { url: "https://tube.numerique.gouv.fr/feeds/videos.xml?videoChannelId=367", name: "PeerTube — ANSSI" },
+        { url: "https://video.cnil.fr/feeds/videos.xml?videoChannelId=9", name: "PeerTube — CNIL" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCS9nUN1gcLhp4HA-HLL-_aw", name: "YT — ANSSI" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCx6jwkLFV1YWdZ_7RGSQN1w", name: "YT — CECyF" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC8k0W03b2VeNAzHKnIQ2tHQ", name: "YT — CERTILIENCE" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCw-ToDFIf8dulR3Le7z3TMw", name: "YT — Campus Cyber" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCWxsacs2zAc2ZmX4B8tw1-Q", name: "YT — CLUSIF" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCT71Jyz1FgI3JpQojh6NehA", name: "YT — Cyber Talk" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCPikJKhDJ_wBXS1jLbB6xmg", name: "YT — Sécurité info" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCkd_08eok-tVNrjtq6w0oKg", name: "YT — Cyber FR 2" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC2h807CwqEmxxCLqjBFSxng", name: "YT — Cyberalliance" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC9ogZvaX9kDdUFrtfTj7P_w", name: "YT — Cybersec Academy" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC1aNUxFk97Ixow3OR2gTwxg", name: "YT — Cyber-securite.fr" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCZevW3w8UMya8M_ZqUaVlSw", name: "YT — Blog du Hacker" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC6VU3w1kFiBuXdPabVT2jCA", name: "YT — CyberISO" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCebn2IWCKRj1ihdSSkdmT8A", name: "YT — CyberPlan" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCz9_OxyPVe6xt0u6nOcRnSw", name: "YT — CyberSchool" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCATrWYs912NN3hqaIDcRG_A", name: "YT — Cyber FR 3" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCqAUmpTXbid8sLp6c--xeHg", name: "YT — InCyber" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCC1qF7OBe0y_16dW01A-uSA", name: "YT — SSTIC" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCRFytLnhU3eUDmubwWYHQpg", name: "YT — Sysdream" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCnC8KCcp2-DYfPY4_bKIc0A", name: "YT — Sécurité OFF" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCpO81F__pMe9MySTKUHCz0w", name: "YT — Blog du Hacker 2" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCr1blmjSuQXEcu3aec4G7lg", name: "YT — Cyber FR 4" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCMgEeDcG-PDoZTGaepOa_OA", name: "YT — Orange Cyberdef" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCdwU220i_W234-8zwDAU1Yw", name: "YT — OSSIR" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCGjKwjEvPA0ms2wOyBwdMPQ", name: "YT — Cyber FR 5" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC8F5QPzcUQtjj5yBc4RTbtQ", name: "YT — FR Cyber" },
+        { url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCKvqbi_tSQe9g6B-hnxMlHw", name: "YT — Intrinsec" },
+        { url: "https://www.dailymotion.com/rss/user/ANSSI_FR", name: "Dailymotion — ANSSI" },
+        { url: "https://www.dailymotion.com/rss/user/cybermalveillance", name: "Dailymotion — Cybermalv." },
+        { url: "https://odysee.com/$/rss/@Hafnium:c", name: "Odysee — Hafnium" },
+        { url: "https://feed.ausha.co/l22YRI0rYarJ", name: "Podcast — Cyber FR" },
+        { url: "https://feed.ausha.co/7Y2lGIEJpXd1", name: "Podcast — CECyF" },
+        { url: "https://feed.ausha.co/rjLzeUqpJDe1", name: "Podcast — Cyber FR 2" },
+        { url: "https://feed.ausha.co/Z0g3xfma2P2n", name: "Podcast — Cyber FR 3" },
+        { url: "https://feed.ausha.co/KwvdxtwwlYdV", name: "Podcast — CyberSchool" },
+        { url: "https://feed.ausha.co/BxpxZc2aQMrl", name: "Podcast — Cyber FR 4" },
+        { url: "https://feed.ausha.co/BxqxgHq512AL", name: "Podcast — Cyber FR 5" },
+        { url: "https://feed.ausha.co/7zMxQFOPzR9O", name: "Podcast — La Sécu" },
+        { url: "https://securite.fm/episodes.m4a.rss", name: "Podcast — Sécurité.fm" },
+        { url: "https://www.nolimitsecu.fr/feed/podcast/", name: "NoLimitSecu Podcast" },
+        { url: "https://feeds.acast.com/public/shows/le-dejargonneur-cyber", name: "Podcast — Déjargonneur Cyber" },
+        { url: "https://feeds.audiomeans.fr/feed/83e1fa2e-e2dd-4716-9422-21d0b60a18b0.xml", name: "Podcast — Cyber FR 6" },
+        { url: "https://feeds.audiomeans.fr/feed/7962208c-987b-4d10-8e9a-104d0d77851a.xml", name: "Podcast — Cyber FR 7" },
+        { url: "https://feeds.redcircle.com/ee62d503-8472-489e-aa70-be2885f8f5c9", name: "Podcast — RedCircle Cyber" },
+        { url: "https://anchor.fm/s/43dfa08c/podcast/rss", name: "Podcast — Anchor Cyber" },
+        { url: "https://polysecure.ca/episodes.mp3.rss", name: "Podcast — PolySecure (CA)" },
+        { url: "https://feeds.podcastics.com/podcastics/podcasts/rss/7830_715fc0df79e689d2aaf12925f9e0b427.rss", name: "Podcast — Podcastics Cyber" }
+    ],
+
+    "👥 Communauté & Blogs": [
+        { url: "https://www.reddit.com/r/CyberFrance.rss", name: "Reddit r/CyberFrance" },
+        { url: "https://bsky.app/profile/did:plc:z24pbqze7pwrut7rm6b73bsn/rss", name: "Bluesky — CERT-FR" },
+        { url: "https://bsky.app/profile/did:plc:3i4htisyibpap3mkxe2wam3x/rss", name: "Bluesky — ANSSI" },
+        { url: "https://bsky.app/profile/did:plc:f5actelapptih47jy2d5it4u/rss", name: "Bluesky — Cyber Expert" },
+        { url: "https://bsky.app/profile/did:plc:z5wqufpi3akdylu2sqyzryqr/rss", name: "Bluesky — Infosec FR" },
+        { url: "https://bsky.app/profile/did:plc:hgnm4nlum3csq5atinylrdbn/rss", name: "Bluesky — Infosec FR 2" },
+        { url: "https://bsky.app/profile/did:plc:2b43jaqjp5vjvhy2aeg2dguc/rss", name: "Bluesky — CLUSIF" },
+        { url: "https://bsky.app/profile/did:plc:c4xhhr5ne32rqachaxbxzqzm/rss", name: "Bluesky — SentinelOne FR" },
+        { url: "https://bsky.app/profile/did:plc:k7w5tf7gws2uyhgick3frdld/rss", name: "Bluesky — Stormshield" },
+        { url: "https://bsky.app/profile/did:plc:ngmevy5f5b3cgdkombtf3onr/rss", name: "Bluesky — Zataz" },
+        { url: "https://bsky.app/profile/did:plc:vlrvi6yneeq5jywrtfetg425/rss", name: "Bluesky — M82 Project" },
+        { url: "https://infosec.exchange/@sstic.rss", name: "Mastodon — SSTIC" },
+        { url: "https://infosec.exchange/@clusif.rss", name: "Mastodon — CLUSIF" },
+        { url: "https://infosec.exchange/@leHACK.rss", name: "Mastodon — leHACK" },
+        { url: "https://infosec.exchange/@hackfest.rss", name: "Mastodon — Hackfest" },
+        { url: "https://infosec.exchange/@ossir.rss", name: "Mastodon — OSSIR" },
+        { url: "https://infosec.exchange/@ValeryMarchive.rss", name: "Mastodon — ValeryMarchive" },
+        { url: "https://infosec.exchange/@arcsi_fr.rss", name: "Mastodon — ARCSI" },
+        { url: "https://infosec.exchange/@M82_project.rss", name: "Mastodon — M82 Project" },
+        { url: "https://infosec.exchange/@nono2357.rss", name: "Mastodon — nono2357" },
+        { url: "https://social.numerique.gouv.fr/@cert_fr.rss", name: "Mastodon — CERT-FR" },
+        { url: "https://social.numerique.gouv.fr/@cnil.rss", name: "Mastodon — CNIL" },
+        { url: "https://mastodon.top/tags/cybersecurite.rss", name: "Mastodon — #cybersécurité" },
+        { url: "https://mastodon.social/@cyberveille.rss", name: "Mastodon — Cyberveille" },
+        { url: "https://mastodon.social/@Belganon.rss", name: "Mastodon — Belganon" },
+        { url: "https://mamot.fr/@affordance.rss", name: "Mastodon — Affordance" },
+        { url: "https://mamot.fr/@Meg4R0M.rss", name: "Mastodon — Meg4R0M" },
+        { url: "https://piaille.fr/@Herve_Schauer.rss", name: "Mastodon — H. Schauer" },
+        { url: "https://piaille.fr/@cyber_learning.rss", name: "Mastodon — Cyber Learning" },
+        { url: "https://firefish.imirhil.fr/@aeris.rss", name: "Fediverse — Aeris" },
+        { url: "https://riin.fr/@CECyF.rss", name: "Fediverse — CECyF" },
+        { url: "https://blog.marcfredericgomez.fr/feed/", name: "Blog — MF Gomez" },
+        { url: "https://whiteandhack.wordpress.com/feed/", name: "Blog — WhiteAndHack" },
+        { url: "https://net-security.fr/index.xml", name: "Blog — Net Security" },
+        { url: "https://net-security.fr/categories/securite/index.xml", name: "Blog — Net Security Sécu" },
+        { url: "https://avantdecliquer.com/feed/", name: "Blog — Avant de Cliquer" },
+        { url: "https://www.datasecuritybreach.fr/category/cybersecurite/feed/", name: "DataSecurityBreach" },
+        { url: "https://cybercriminalite.blog/feed/", name: "Blog — Cybercriminalité" },
+        { url: "https://feeds.feedburner.com/malekal/byeyi6Sgk55", name: "Malekal" },
+        { url: "https://feeds.feedburner.com/leblogduhacker/yh5orq1qf8t", name: "Blog du Hacker" },
+        { url: "https://cyberveille.curated.co/issues.rss", name: "Cyberveille Curated" },
+        { url: "https://veillecyber.fr/rss/", name: "Veille Cyber" },
+        { url: "https://www.journalduhacker.net/t/s%C3%A9curit%C3%A9.rss", name: "Journal du Hacker" },
+        { url: "https://unlockyourbrain.bzh/index.xml", name: "UnlockYourBrain" },
+        { url: "https://www.portail-ie.fr/category/univers/risques-et-gouvernance-cyber/feed/", name: "Portail IE — Cyber" }
+    ],
+
+    "🏢 Vendors & Solutions": [
+        { url: "https://www.kaspersky.com/blog/feed/", name: "Kaspersky Lab" },
+        { url: "https://www.trendmicro.com/en_us/research/rss/feed", name: "Trend Micro" },
+        { url: "https://www.bitdefender.com/blog/api/labs/feed/", name: "Bitdefender Labs" },
+        { url: "https://www.sophos.com/en-us/news/rss-feed", name: "Sophos" },
+        { url: "https://blog.malwarebytes.com/feed/", name: "Malwarebytes" },
+        { url: "https://www.sentinelone.com/fr/feed/", name: "SentinelOne FR" },
+        { url: "https://www.stormshield.com/fr/feed/", name: "Stormshield" },
+        { url: "https://www.stormshield.com/fr/category/alertes/feed/", name: "Stormshield — Alertes" },
+        { url: "https://www.paloaltonetworks.com/blog/feed/?lang=fr", name: "Palo Alto Networks FR" },
+        { url: "https://www.fortinet.com/blog/feed/threat-research", name: "Fortinet" },
+        { url: "https://www.varonis.com/fr/blog/rss.xml", name: "Varonis FR" },
+        { url: "https://outpost24.com/fr/feed/", name: "Outpost24 FR" },
+        { url: "https://www.proofpoint.com/fr/rss.xml", name: "Proofpoint FR" },
+        { url: "https://www.elastic.co/fr/blog/feed", name: "Elastic Blog FR" },
+        { url: "https://www.hornetsecurity.com/fr/feed/", name: "Hornetsecurity FR" },
+        { url: "https://datadome.co/fr/feed/", name: "DataDome FR" },
+        { url: "https://socprime.com/fr/feed/", name: "SOC Prime FR" },
+        { url: "https://www.keepersecurity.com/blog/fr/feed/index.xml", name: "Keeper Security FR" },
+        { url: "https://yogosha.com/fr/feed/", name: "Yogosha FR" },
+        { url: "https://www.vaadata.com/fr/blog/feed/", name: "Vaadata FR" },
+        { url: "https://www.algosecure.fr/actualites/rss", name: "AlgoSecure" },
+        { url: "https://almond.eu/feed/", name: "Almond" },
+        { url: "https://sysdream.com/feed/", name: "Sysdream" },
+        { url: "https://torii-security.fr/feed/", name: "Torii Security" },
+        { url: "https://www.itrust.fr/feed", name: "iTrust" },
+        { url: "https://www.digitemis.com/feed/", name: "Digitemis" },
+        { url: "https://www.intrinsec.com/feed/", name: "Intrinsec" },
+        { url: "https://www.certilience.fr/feed/", name: "Certilience" },
+        { url: "https://www.cyberwatch.fr/feed/", name: "Cyberwatch" },
+        { url: "https://www.advens.com/feed/", name: "Advens" },
+        { url: "https://www.welivesecurity.com/fr/rss/feed/", name: "WeLiveSecurity FR" },
+        { url: "http://feeds.feedburner.com/eset/blog?format=xml", name: "ESET Blog" },
+        { url: "https://feeds.feedburner.com/siecledigital/zO8H3vzPyHX", name: "Siècle Digital" },
+        { url: "https://www.nomios.fr/feed.rss", name: "Nomios" },
+        { url: "https://www.hexatrust.com/feed/", name: "Hexatrust" },
+        { url: "https://www.nuabee.fr/blog/cybersecurite-fr/feed/", name: "Nuabee — Cyber FR" },
+        { url: "https://fr.vectra.ai/blog/rss.xml", name: "Vectra AI FR" },
+        { url: "https://www.sectigo.com/feed/blog/fr", name: "Sectigo FR" },
+        { url: "https://www.catonetworks.com/fr/feed/", name: "Cato Networks FR" }
+    ]
+};
+
+// ===== STATE =====
+let allArticles = [];
+let sourceArticleCount = {};
+let currentFilter = { type: 'all', value: null };
+let currentTimeFilter = 'week';
+let currentTypeFilter = 'all';
+let currentSearch = '';
+let okCount = 0;
+let totalSources = 0;
+
+// ===== DOM REFS =====
+const grid = document.getElementById('feed-grid');
+const loader = document.getElementById('loader');
+const loaderMsg = document.getElementById('loader-msg');
+const loaderSub = document.getElementById('loader-sub');
+const loaderBar = document.getElementById('loader-bar');
+const loaderPct = document.getElementById('loader-pct');
+const logList = document.getElementById('log-list');
+const articleCount = document.getElementById('article-count');
+const loaderPercent = document.getElementById('loader-percent');
+const mainProgress = document.getElementById('main-progress');
+const sbArticles = document.getElementById('sb-articles');
+const sbSources = document.getElementById('sb-sources');
+const sbOk = document.getElementById('sb-ok');
+const tickerText = document.getElementById('ticker-text');
+
+// ===== LOGGING =====
+function addLog(name, status, msg) {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    const cls = { OK: 'ok', ERR: 'err', RETRY: 'retry' }[status] || 'wait';
+    entry.innerHTML = `<span class="log-status ${cls}">[${status}]</span><span class="log-name">${name}</span><span class="log-detail">${msg}</span>`;
+    logList.prepend(entry);
+}
+
+// ===== XML PARSER =====
+function parseRSSXML(xmlStr, url) {
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlStr, 'application/xml');
+        const parserErr = doc.querySelector('parsererror');
+        if (parserErr) return null;
+
+        const items = doc.querySelectorAll('item, entry');
+        if (!items.length) return null;
+
+        return Array.from(items).map(item => {
+            const get = (sel) => {
+                for (const s of sel.split(',')) {
+                    const el = item.querySelector(s.trim());
+                    if (el) return el.textContent.trim() || el.getAttribute('href') || '';
+                }
+                return '';
+            };
+            const getAttr = (sel, attr) => {
+                const el = item.querySelector(sel);
+                return el ? el.getAttribute(attr) || '' : '';
+            };
+
+            let link = get('link') || getAttr('link', 'href') || get('id, guid');
+            let title = get('title');
+            let pubDate = get('pubDate, published, updated, dc\\:date, date');
+            if (!pubDate) pubDate = new Date().toISOString();
+
+            return { title: title || '(Sans titre)', link, pubDate, rawSource: url };
+        }).filter(a => a.title && a.link);
+    } catch(e) { return null; }
+}
+
+function getChannelTitle(xmlStr) {
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlStr, 'application/xml');
+        const t = doc.querySelector('channel > title, feed > title');
+        return t ? t.textContent.trim() : '';
+    } catch(e) { return ''; }
+}
+
+// ===== FETCH WITH PROXY + RETRY =====
+// Vérification proxy local au démarrage
+let proxyAvailable = false;
+async function checkProxy() {
+    try {
+        const res = await fetch(`${LOCAL_PROXY}/ping`, { signal: AbortSignal.timeout(3000) });
+        if (res.ok) { proxyAvailable = true; return true; }
+    } catch(e) {}
+    proxyAvailable = false;
+    return false;
+}
+
+async function fetchFeedDirect(url, sourceName) {
+    const proxyUrl = PROXIES[0](url);
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const items = parseRSSXML(text, url);
+        if (items && items.length > 0) {
+            return { items, channelTitle: getChannelTitle(text), proxy: 0 };
+        }
+        return { items: [], channelTitle: '', proxy: 0 };
+    } catch(e) {
+        const msg = e.name === 'AbortError' ? 'Timeout 15s' : e.message;
+        addLog(sourceName, 'ERR', msg);
+        return null;
+    }
+}
+
+// ===== SOURCE MAP =====
+const sourceMap = new Map();
+function buildSourceMap() {
+    totalSources = 0;
+    for (const [cat, sources] of Object.entries(SOURCES)) {
+        for (const s of sources) {
+            sourceMap.set(s.url, { name: s.name, category: cat, type: detectType(s.url) });
+            totalSources++;
+        }
+    }
+}
+
+// ===== INIT =====
+async function init() {
+    buildSourceMap();
+    renderSidebar();
+    await loadAllFeeds();
+}
+
+// ===== LOAD ALL FEEDS =====
+async function loadAllFeeds() {
+    allArticles = [];
+    sourceArticleCount = {};
+    okCount = 0;
+    let processed = 0;
+
+    const allSources = [];
+    for (const [cat, sources] of Object.entries(SOURCES)) {
+        for (const s of sources) {
+            allSources.push({ ...s, category: cat });
+        }
+    }
+
+    const BATCH_SIZE = 12;
+    const DELAY_BETWEEN_BATCHES = 400;
+
+    loaderMsg.textContent = `CHARGEMENT DE ${allSources.length} FLUX EN PARALLÈLE...`;
+
+    for (let i = 0; i < allSources.length; i += BATCH_SIZE) {
+        const batch = allSources.slice(i, i + BATCH_SIZE);
+
+        const results = await Promise.allSettled(
+            batch.map(async (s) => {
+                const result = await fetchFeedDirect(s.url, s.name);
+                return { s, result };
+            })
+        );
+
+        for (const res of results) {
+            processed++;
+            const pct = Math.round((processed / allSources.length) * 100);
+            loaderBar.style.width = pct + '%';
+            loaderPct.textContent = pct + '%';
+            mainProgress.style.width = pct + '%';
+            loaderPercent.textContent = pct + '% CHARGÉ';
+            loaderMsg.textContent = `FLUX ${processed}/${allSources.length}`;
+
+            if (res.status === 'fulfilled') {
+                const { s, result } = res.value;
+                const meta = sourceMap.get(s.url);
+
+                if (result && result.items && result.items.length > 0) {
+                    okCount++;
+                    const mappedItems = result.items.map(item => ({
+                        ...item,
+                        source: meta ? meta.name : (result.channelTitle || s.name),
+                        category: meta ? meta.category : s.category,
+                        contentType: meta ? meta.type : detectType(s.url)
+                    }));
+                    allArticles = allArticles.concat(mappedItems);
+                    sourceArticleCount[s.url] = result.items.length;
+                    addLog(s.name, 'OK', `${result.items.length} items — proxy ${result.proxy + 1}`);
+                } else if (result && result.items.length === 0) {
+                    addLog(s.name, 'ERR', 'Flux vide ou XML invalide');
+                } else {
+                    addLog(s.name, 'ERR', 'Timeout ou erreur réseau');
+                }
+            } else {
+                const s = batch[results.indexOf(res)]?.s || { name: 'Inconnu' };
+                addLog(s.name || 'Inconnu', 'ERR', 'Erreur inattendue');
+            }
+
+            sbArticles.textContent = allArticles.length;
+            sbOk.textContent = okCount;
+            articleCount.textContent = `${allArticles.length} ARTICLES`;
+
+            // Render incrementally every 30 articles
+            if (allArticles.length % 30 === 0 || processed === allSources.length) {
+                allArticles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+                applyFilters();
+                updateSidebarCounts();
+            }
+        }
+
+        if (i + BATCH_SIZE < allSources.length) {
+            await new Promise(r => setTimeout(r, DELAY_BETWEEN_BATCHES));
+        }
+    }
+
+    // Final render
+    allArticles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    applyFilters();
+    updateSidebarCounts();
+    updateTicker();
+
+    sbSources.textContent = okCount;
+    sbArticles.textContent = allArticles.length;
+    loaderMsg.textContent = `CHARGEMENT TERMINÉ — ${okCount}/${allSources.length} SOURCES OK`;
+    loaderSub.textContent = `${allArticles.length} articles disponibles`;
+
+    await new Promise(r => setTimeout(r, 2500));
+    loader.style.opacity = '0';
+    await new Promise(r => setTimeout(r, 600));
+    loader.style.display = 'none';
+}
+
+function updateTicker() {
+    const recent = allArticles.slice(0, 20).map(a => `// ${a.source.toUpperCase()}: ${a.title}`).join(' ');
+    tickerText.textContent = recent + ' // CYBERFEED FLUX DIRECT //';
+    // Reset animation
+    tickerText.style.animation = 'none';
+    tickerText.offsetHeight;
+    tickerText.style.animation = '';
+}
+
+// ===== SIDEBAR =====
+function renderSidebar() {
+    let html = `<div class="category-group"><div class="cat-header" onclick="applyGlobalFilter()"><span>> TOUT AFFICHER</span></div></div>`;
+    for (const [catName, sources] of Object.entries(SOURCES)) {
+        const srcItems = sources.map(s => {
+            const t = detectType(s.url);
+            const badge = t !== 'article' ? `<span class="type-badge ${t}">${t === 'video' ? '▶' : t === 'podcast' ? '🎙' : '◈'}</span>` : '';
+            return `<a href="#" class="source-link" id="src-${btoa(s.url).replace(/[^a-zA-Z0-9]/g,'').substring(0,12)}" onclick="filterBySource('${s.url.replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}',event)">
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</span>
+                        <span style="display:flex;align-items:center;gap:3px;flex-shrink:0;">${badge}<span class="src-count" id="cnt-${btoa(s.url).replace(/[^a-zA-Z0-9]/g,'').substring(0,12)}"></span></span>
+                    </a>`;
+        }).join('');
+        html += `
+            <div class="category-group">
+                <div class="cat-header" onclick="toggleCategory(this)">
+                    <span>${catName}</span>
+                    <span class="cat-count">${sources.length}</span>
+                </div>
+                <div class="cat-content">
+                    <a href="#" class="source-link" onclick="filterByCategory('${catName.replace(/'/g,"\\'")}',event)">[VOIR CATÉGORIE]</a>
+                    ${srcItems}
+                </div>
+            </div>`;
+    }
+    document.getElementById('theme-menu').innerHTML = html;
+}
+
+function updateSidebarCounts() {
+    for (const [url, cnt] of Object.entries(sourceArticleCount)) {
+        const key = btoa(url).replace(/[^a-zA-Z0-9]/g,'').substring(0,12);
+        const el = document.getElementById('cnt-' + key);
+        if (el) el.textContent = cnt;
+    }
+}
+
+window.toggleCategory = (h) => h.nextElementSibling.classList.toggle('open');
+
+window.applyGlobalFilter = () => {
+    currentFilter = { type: 'all', value: null };
+    document.getElementById('current-view-title').textContent = 'Tout Afficher';
+    document.querySelectorAll('.source-link').forEach(e => e.classList.remove('active'));
+    applyFilters();
+};
+
+window.filterByCategory = (cat, e) => {
+    if (e) e.preventDefault();
+    currentFilter = { type: 'category', value: cat };
+    document.getElementById('current-view-title').textContent = cat;
+    document.querySelectorAll('.source-link').forEach(el => el.classList.remove('active'));
+    if (e && e.target) e.target.classList.add('active');
+    applyFilters();
+};
+
+window.filterBySource = (url, name, e) => {
+    if (e) e.preventDefault();
+    currentFilter = { type: 'source', value: url };
+    document.getElementById('current-view-title').textContent = name;
+    document.querySelectorAll('.source-link').forEach(el => el.classList.remove('active'));
+    if (e && e.target) e.target.closest('.source-link').classList.add('active');
+    applyFilters();
+};
+
+window.setTimeFilter = (f, btn) => {
+    currentTimeFilter = f;
+    document.querySelectorAll('.time-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    applyFilters();
+};
+
+window.setTypeFilter = (f, btn) => {
+    currentTypeFilter = f;
+    document.querySelectorAll('.type-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    applyFilters();
+};
+
+// ===== AUTO-REFRESH (toutes les heures) =====
+let autoRefreshSecondsLeft = 3600;
+const badge = () => document.getElementById('auto-refresh-badge');
+
+function updateBadge() {
+    const m = String(Math.floor(autoRefreshSecondsLeft / 60)).padStart(2, '0');
+    const s = String(autoRefreshSecondsLeft % 60).padStart(2, '0');
+    if (badge()) badge().textContent = `⏱ ${m}:${s}`;
+}
+
+let autoRefreshTimer = setInterval(() => {
+    autoRefreshSecondsLeft--;
+    updateBadge();
+    if (autoRefreshSecondsLeft <= 0) {
+        autoRefreshSecondsLeft = 3600;
+        console.log('[CyberFlux] Auto-refresh déclenché');
+        window.refreshFeeds();
+    }
+}, 1000);
+
+window.refreshFeeds = () => {
+    loader.style.display = 'flex';
+    loader.style.opacity = '1';
+    logList.innerHTML = '';
+    loaderBar.style.background = 'var(--accent)';
+    loaderBar.style.width = '0%';
+    loaderPct.textContent = '0%';
+    init();
+};
+
+// ===== FILTERS =====
+function applyFilters() {
+    let filtered = [...allArticles];
+    const now = new Date();
+
+    if (currentFilter.type === 'source') {
+        filtered = filtered.filter(a => a.rawSource === currentFilter.value);
+    } else if (currentFilter.type === 'category') {
+        filtered = filtered.filter(a => a.category === currentFilter.value);
+    }
+
+    if (currentTypeFilter !== 'all') {
+        if (currentTypeFilter === 'media') filtered = filtered.filter(a => a.contentType === 'video' || a.contentType === 'podcast');
+        else if (currentTypeFilter === 'social') filtered = filtered.filter(a => a.contentType === 'social');
+        else if (currentTypeFilter === 'article') filtered = filtered.filter(a => a.contentType === 'article');
+    }
+
+    if (currentTimeFilter !== 'all') {
+        filtered = filtered.filter(a => {
+            const diff = (now - new Date(a.pubDate)) / (1000 * 60 * 60 * 24);
+            if (currentTimeFilter === 'today') return diff <= 1;
+            if (currentTimeFilter === 'week') return diff <= 7;
+            if (currentTimeFilter === 'month') return diff <= 30;
+            return true;
+        });
+    }
+
+    if (currentSearch) {
+        filtered = filtered.filter(a =>
+            a.title.toLowerCase().includes(currentSearch) ||
+            a.source.toLowerCase().includes(currentSearch)
+        );
+    }
+
+    render(filtered);
+    articleCount.textContent = `${filtered.length} ARTICLES (sur ${allArticles.length})`;
+}
+
+// ===== RENDER =====
+function render(articles) {
+    if (!articles.length) {
+        grid.innerHTML = '<div class="empty-msg">AUCUN ARTICLE TROUVÉ</div>';
+        return;
+    }
+
+    const frag = document.createDocumentFragment();
+    for (const article of articles) {
+        const date = new Date(article.pubDate);
+        const timeStr = isNaN(date) ? '' : date.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+        const tags = getTags(article.title, article.contentType);
+        const tagsHtml = tags.map(t => `<span class="tag ${t.type}">${t.name}</span>`).join('');
+
+        const card = document.createElement('a');
+        card.href = article.link;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.className = 'card';
+        if (article.contentType === 'video' || article.contentType === 'podcast') card.classList.add('media');
+        else if (article.contentType === 'social') card.classList.add('social');
+
+        card.innerHTML = `
+            <div>
+                <div class="meta">
+                    <span class="source">${article.source.toUpperCase()}</span>
+                    <span class="time">${timeStr}</span>
+                </div>
+                <h2 class="card-title">${article.title}</h2>
+            </div>
+            <div class="card-bottom"><div class="tags">${tagsHtml}</div></div>`;
+        frag.appendChild(card);
+    }
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+}
+
+function getTags(title, contentType) {
+    const t = title.toLowerCase();
+    const tags = [];
+    if (contentType === 'video') { tags.push({ name: '▶ Vidéo', type: 'video' }); return tags; }
+    if (contentType === 'podcast') { tags.push({ name: '🎙 Podcast', type: 'podcast' }); return tags; }
+    if (contentType === 'social') { tags.push({ name: '◈ Social', type: 'social' }); return tags; }
+    if (t.includes('ransom') || t.includes('lockbit') || t.includes('blackcat') || t.includes('rançon')) tags.push({ name: 'Ransomware', type: 'ransomware' });
+    else if (t.includes('vuln') || t.includes('cve-') || t.includes('exploit') || t.includes('patch') || t.includes('faille')) tags.push({ name: 'Vuln', type: 'vuln' });
+    if (t.includes('apt') || t.includes('espionnage') || t.includes('nation state')) tags.push({ name: 'APT', type: 'apt' });
+    if (t.includes('france') || t.includes('anssi') || t.includes('français') || t.includes('cnil')) tags.push({ name: 'France', type: 'france' });
+    if (t.includes('phishing') || t.includes('hameçon') || t.includes('spear')) tags.push({ name: 'Phishing', type: 'phishing' });
+    if (t.includes('fuite') || t.includes('breach') || t.includes('leak') || t.includes('données personnelles')) tags.push({ name: 'Data Leak', type: 'data' });
+    if (tags.length === 0) tags.push({ name: 'Info', type: 'general' });
+    return tags;
+}
+
+// ===== SEARCH =====
+document.getElementById('search').addEventListener('input', e => {
+    currentSearch = e.target.value.toLowerCase().trim();
+    applyFilters();
+});
+
+// ===== START =====
+document.addEventListener('DOMContentLoaded', init);
+
+async function init() {
+    buildSourceMap();
+    renderSidebar();
+
+    // Vérification proxy local
+    loaderMsg.textContent = 'VÉRIFICATION DU PROXY LOCAL...';
+    loaderSub.textContent = `http://localhost:${LOCAL_PROXY.split(':')[2]}/ping`;
+    const ok = await checkProxy();
+
+    if (!ok) {
+        loaderMsg.textContent = '⚠ PROXY LOCAL INTROUVABLE';
+        loaderSub.textContent = 'Lance : python3 cyberflux_proxy.py — puis recharge la page';
+        loaderBar.style.background = '#ffcc00';
+        document.getElementById('loader-pct').textContent = '';
+        // Afficher message détaillé dans les logs
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.style.cssText = 'grid-template-columns:1fr;color:#ffcc00;padding:1rem;font-size:0.8rem;line-height:1.8;';
+        entry.innerHTML = `
+            <div>Le proxy local n'est pas détecté sur http://localhost:8765</div>
+            <div style="color:#666;margin-top:0.5rem;">1. Ouvre un terminal Kali/WSL</div>
+            <div style="color:#666;">2. Va dans le dossier contenant les fichiers</div>
+            <div style="color:#aaa;font-weight:bold;">   python3 cyberflux_proxy.py</div>
+            <div style="color:#666;margin-top:0.5rem;">3. Recharge cette page (F5)</div>
+        `;
+        logList.appendChild(entry);
+        return;
+    }
+
+    loaderMsg.textContent = 'PROXY OK — CHARGEMENT DES FLUX...';
+    await loadAllFeeds();
+}
+</script>
+</body>
+</html>
